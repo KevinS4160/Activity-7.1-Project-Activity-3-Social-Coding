@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>MapQuest Directions</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+
+<body style="background-image: url('{{ url_for('static', filename='images.jpeg') }}');">
+    <div class="container">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" style="width: 150px;"/>
+        </div>
+        <h1>Get Directions</h1>
+        <form id="directions-form">
+            <h4 style="margin-bottom: 10px;">Your Location:</h4>
+            <input type="text" id="origin" name="origin" placeholder="Starting Location" required>
+            <h4 style="margin-bottom: 10px;">Your Destination:</h4>
+            <input type="text" id="destination" name="destination" placeholder="Destination" required>
+            <button type="submit">Get Directions</button>
+        </form>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            $('#directions-form').on('submit', function (e) {
+                e.preventDefault();
+                $.ajax({
+                    type: 'POST',
+                    url: '/get_directions',
+                    data: $(this).serialize(),
+                    success: function (data) {
+                        if (data.status === "success") {
+                            let kilometers = parseFloat(data.distance);
+                            let miles = (kilometers / 1.60934).toFixed(2); // Convert to miles
+
+                            let results = `<h2>Trip Duration: ${data.formattedTime}</h2>`;
+                            results += `<h3>Kilometers: ${kilometers.toFixed(2)} km</h3>`;
+                            results += `<h3>Miles: ${miles} mi</h3>`; // Display miles
+                            results += `<div class="directions">`;
+                            data.narrative.forEach(function (step) {
+                                results += `<div class="direction-item">-> ${step}</div>`;
+                            });
+                            results += `</div>`;
+                            $('#results').html(results);
+                        } else {
+                            $('#results').html(`<p>Error: Status Code ${data.code}</p>`);
+                        }
+                    },
+                    error: function () {
+                        $('#results').html('<p>Error in getting directions. Please try again.</p>');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
